@@ -23,10 +23,13 @@ async function load() {
         if (!json.data || json.data.length === 0) {
             text = 'No upcoming buses';
         } else {
+            // Deduplicate: keep only the soonest ETA per route
+            const bestPerRoute = {};
+            
             json.data.forEach(bus => {
                 const route = bus.route;
                 
-                // Time-based filter
+                // Time filter
                 if (isBefore9 && !['960X', '960B'].includes(route)) return;
                 if (!isBefore9 && !LONG_LIST.includes(route)) return;
 
@@ -36,7 +39,13 @@ async function load() {
                     etaText = (diffMin <= 1) ? 'Due' : diffMin + ' min';
                 }
 
-                text += `${route} → ${bus.dest_en} - ${etaText}\n`;
+                // Only keep the best (soonest) entry per route
+                if (!bestPerRoute[route] || etaText === 'Due' || 
+                    (bestPerRoute[route] !== 'Due' && parseInt(etaText) < parseInt(bestPerRoute[route]))) {
+                    bestPerRoute[route] = etaText;
+                    text = text.replace(new RegExp(`^${route}.*\\n?`, 'm'), ''); // remove old line
+                    text += `${route} → ${bus.dest_en} - ${etaText}\n`;
+                }
             });
         }
         
