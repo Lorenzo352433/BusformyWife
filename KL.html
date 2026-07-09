@@ -8,33 +8,39 @@
 <pre id="output">Loading...</pre>
 
 <script>
+const LONG_LIST = ['57M','58M','59M','60M','59X','60X','62X','63X','66M','66X','67A','67M','67X','68A','960','961','258D','259D','260X'];
+
 async function load() {
     try {
         const res = await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/376C4835851621D4');
         const json = await res.json();
         let text = '';
+        
+        const now = new Date();
+        const hour = now.getHours();
+        const isBefore9 = hour < 9;
 
         if (!json.data || json.data.length === 0) {
             text = 'No upcoming buses';
         } else {
             json.data.forEach(bus => {
+                const route = bus.route;
+                
+                // Time-based filter
+                if (isBefore9 && !['960X', '960B'].includes(route)) return;
+                if (!isBefore9 && !LONG_LIST.includes(route)) return;
+
                 let etaText = 'No ETA';
-                
                 if (bus.eta) {
-                    const etaTime = new Date(bus.eta);
-                    const diffMin = Math.round((etaTime - Date.now()) / 60000);
-                    
-                    if (diffMin <= 1) {
-                        etaText = 'Due';
-                    } else {
-                        etaText = diffMin + ' min';
-                    }
+                    const diffMin = Math.round((new Date(bus.eta) - now) / 60000);
+                    etaText = (diffMin <= 1) ? 'Due' : diffMin + ' min';
                 }
-                
-                text += `${bus.route} → ${bus.dest_en} - ${etaText}\n`;
+
+                text += `${route} → ${bus.dest_en} - ${etaText}\n`;
             });
         }
-        document.getElementById('output').textContent = text.trim();
+        
+        document.getElementById('output').textContent = text.trim() || 'No buses matching current time';
     } catch (e) {
         document.getElementById('output').textContent = 'Error loading data';
     }
