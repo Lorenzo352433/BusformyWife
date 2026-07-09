@@ -1,36 +1,53 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kowloon Bound ETA</title>
+<style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 16px; background: #f8f9fa; }
+    h1 { font-size: 1.4rem; margin-bottom: 12px; }
+    .bus { padding: 12px; background: white; margin-bottom: 8px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .route { font-weight: 700; font-size: 1.3rem; }
+    .dest { color: #555; margin-top: 4px; }
+    .eta { color: #1565ff; font-weight: 600; margin-top: 6px; }
+</style>
+</head>
 <body>
-<h1>Tuen Mun Bound</h1>
-<p id="last">Last updated: <span id="time"></span></p>
-
-<div id="etas"></div>
+<h1>Kowloon Bound</h1>
+<div id="busList">Loading...</div>
 
 <script>
-    async function load() {
-        const container = document.getElementById('etas');
-        container.innerHTML = '<p>Loading...</p>';
+async function loadBuses() {
+    try {
+        const res = await fetch('https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/376C4835851621D4');
+        const json = await res.json();
         
-        // Mock data - replace with real API later if needed
-        const buses = [
-            "63 → Tuen Mun Road BBI : 4 min",
-            "A33 → Tuen Mun Road BBI : 11 min",
-            "263B → Fo Tan : 18 min",
-            "60X → Tuen Mun Central : 27 min"
-        ];
+        const container = document.getElementById('busList');
+        container.innerHTML = '';
 
-        let html = '';
-        buses.forEach(line => {
-            html += `<p>${line}</p>`;
+        if (!json.data || json.data.length === 0) {
+            container.innerHTML = '<p>No upcoming buses</p>';
+            return;
+        }
+
+        json.data.forEach(bus => {
+            const div = document.createElement('div');
+            div.className = 'bus';
+            div.innerHTML = `
+                <div class="route">${bus.route}</div>
+                <div class="dest">${bus.dest_en}</div>
+                <div class="eta">${bus.eta ? new Date(bus.eta).toLocaleTimeString() : 'No ETA'}</div>
+            `;
+            container.appendChild(div);
         });
-        
-        container.innerHTML = html;
-        document.getElementById('time').textContent = new Date().toLocaleTimeString('en-US', {hour12: false});
+    } catch (e) {
+        document.getElementById('busList').innerHTML = '<p>Error loading data</p>';
     }
+}
 
-    load();
-    setInterval(load, 30000); // refresh every 30s
+loadBuses();
+setInterval(loadBuses, 30000); // Auto refresh every 30s
 </script>
 </body>
 </html>
