@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body>
+<h1>Tuen Mun Bound</h1>
+<p id="last">Last updated: <span id="time"></span></p>
+
+<div id="etas"></div>
+
+<script>
+    async function load() {
+        const container = document.getElementById('etas');
+        container.innerHTML = '<p>Loading...</p>';
+        
+        // Mock data - replace with real API later if needed
+        const buses = [
+            "63 → Tuen Mun Road BBI : 4 min",
+            "A33 → Tuen Mun Road BBI : 11 min",
+            "263B → Fo Tan : 18 min",
+            "60X → Tuen Mun Central : 27 min"
+        ];
+
+        let html = '';
+        buses.forEach(line => {
+            html += `<p>${line}</p>`;
+        });
+        
+        container.innerHTML = html;
+        document.getElementById('time').textContent = new Date().toLocaleTimeString('en-US', {hour12: false});
+    }
+
+    load();
+    setInterval(load, 30000); // refresh every 30s
+</script>
+</body>
+</html>
