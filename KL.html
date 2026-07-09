@@ -18,15 +18,28 @@ async function load() {
             text = 'No upcoming buses';
         } else {
             json.data.forEach(bus => {
-                const eta = bus.eta ? new Date(bus.eta).toLocaleTimeString() : 'No ETA';
-                text += `${bus.route} → ${bus.dest_en} - ${eta}\n`;
+                let etaText = 'No ETA';
+                
+                if (bus.eta) {
+                    const etaTime = new Date(bus.eta);
+                    const diffMin = Math.round((etaTime - Date.now()) / 60000);
+                    
+                    if (diffMin <= 1) {
+                        etaText = 'Due';
+                    } else {
+                        etaText = diffMin + ' min';
+                    }
+                }
+                
+                text += `${bus.route} → ${bus.dest_en} - ${etaText}\n`;
             });
         }
-        document.getElementById('output').textContent = text;
+        document.getElementById('output').textContent = text.trim();
     } catch (e) {
         document.getElementById('output').textContent = 'Error loading data';
     }
 }
+
 load();
 setInterval(load, 30000);
 </script>
